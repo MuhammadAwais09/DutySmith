@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "761416400146",
+    "firebase_url": "https://dutysmith-25ccb-default-rtdb.firebaseio.com",
+    "project_id": "dutysmith-25ccb",
+    "storage_bucket": "dutysmith-25ccb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:761416400146:android:d3bbaa372d30d6f83487cb",
+        "android_client_info": {
+          "package_name": "com.example.dutysmith_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdRS9eN2K6Hq39RS6eoYnyUWqkjseQwzY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
