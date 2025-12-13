@@ -14,6 +14,9 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   double _opacity = 0;
 
+  StreamSubscription<User?>? _sub;
+  bool _navigated = false;
+
   @override
   void initState() {
     super.initState();
@@ -23,16 +26,25 @@ class _SplashScreenState extends State<SplashScreen> {
       if (mounted) setState(() => _opacity = 1);
     });
 
-    // Navigate after 2 seconds
-    Timer(const Duration(seconds: 2), _goNext);
+    // Ensure splash shows at least 2 seconds
+    final minSplash = Future<void>.delayed(const Duration(seconds: 2));
+
+    _sub = FirebaseAuth.instance.authStateChanges().listen((user) async {
+      // Wait for minimum splash duration
+      await minSplash;
+
+      if (!mounted || _navigated) return;
+      _navigated = true;
+
+      final route = (user == null) ? '/login' : '/home';
+      Navigator.of(context).pushReplacementNamed(route);
+    });
   }
 
-  void _goNext() {
-    if (!mounted) return;
-
-    final user = FirebaseAuth.instance.currentUser;
-    final route = (user == null) ? '/login' : '/home';
-    Navigator.of(context).pushReplacementNamed(route);
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
   }
 
   @override
@@ -50,7 +62,6 @@ class _SplashScreenState extends State<SplashScreen> {
               children: [
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    // Responsive logo sizing
                     final double logoSize =
                         (constraints.maxWidth * 0.65).clamp(220.0, 360.0);
 

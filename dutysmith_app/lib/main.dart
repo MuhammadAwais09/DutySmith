@@ -4,8 +4,11 @@ import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
 import 'splash_screen.dart';
+import 'login_screen.dart';
+import 'register_screen.dart';
+import 'menu_screen.dart'; // 👈 replaces the old home_screen import
 
-class LanguageProvider with ChangeNotifier { 
+class LanguageProvider with ChangeNotifier {
   bool _isUrdu = false;
 
   bool get isUrdu => _isUrdu;
@@ -52,7 +55,17 @@ class MainApp extends StatelessWidget {
             primaryColor: const Color(0xFF003366),
             scaffoldBackgroundColor: const Color(0xFFFFFFFF),
           ),
-          home: const SplashScreen(),
+
+          // Start at splash
+          initialRoute: '/',
+
+          // Define named routes used by SplashScreen
+          routes: {
+            '/': (_) => const SplashScreen(),
+            '/login': (_) => const LoginScreen(),
+            '/register': (_) => const RegisterScreen(),
+            '/home': (_) => const MenuScreen(), // 👈 renamed to MenuScreen
+          },
         );
       },
     );
