@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'splash_screen.dart';
 
-class LanguageProvider with ChangeNotifier {
+class LanguageProvider with ChangeNotifier { 
   bool _isUrdu = false;
 
   bool get isUrdu => _isUrdu;

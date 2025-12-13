@@ -23,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
       if (mounted) setState(() => _opacity = 1);
     });
 
-    // Go next after 2 seconds
+    // Navigate after 2 seconds
     Timer(const Duration(seconds: 2), _goNext);
   }
 
@@ -32,7 +32,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final user = FirebaseAuth.instance.currentUser;
     final route = (user == null) ? '/login' : '/home';
-
     Navigator.of(context).pushReplacementNamed(route);
   }
 
@@ -49,11 +48,26 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset(
-                  'assets/images/logo.png',
-                  width: 180,
-                  height: 180,
-                  fit: BoxFit.contain,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Responsive logo sizing
+                    final double logoSize =
+                        (constraints.maxWidth * 0.65).clamp(220.0, 360.0);
+
+                    return Image.asset(
+                      'assets/images/logo.png',
+                      width: logoSize,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.image_not_supported,
+                          size: logoSize * 0.5,
+                          color: AppColors.darkGrey,
+                        );
+                      },
+                    );
+                  },
                 ),
                 const SizedBox(height: 18),
                 Text(
@@ -65,12 +79,13 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 const SizedBox(height: 22),
                 SizedBox(
-                  width: 200,
+                  width: 220,
                   child: LinearProgressIndicator(
                     minHeight: 4,
-                    backgroundColor: AppColors.primaryDarkBlue.withOpacity(0.15),
+                    backgroundColor:
+                        AppColors.primaryDarkBlue.withValues(alpha: 38),
                     valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.secondaryCyan,
+                      AppColors.accentBrightBlue,
                     ),
                   ),
                 ),
