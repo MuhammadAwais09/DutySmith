@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:dutysmith_app/core/theme/app_colors.dart';
 import 'package:dutysmith_app/menu_screen.dart';
+import 'package:dutysmith_app/screens/forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,7 +13,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // ⏰ Friendly greeting based on time of day
+  // ⏰ Friendly greeting
   String _timeGreeting() {
     final hour = DateTime.now().hour;
     if (hour >= 5 && hour < 12) return 'Good morning';
@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return 'Good night';
   }
 
-  // 🧩 Firebase error translator
+  // 🧩 Friendly error mapper
   String _friendlyAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':
@@ -46,9 +46,10 @@ class _LoginScreenState extends State<LoginScreen> {
       case 'user-not-found':
         return 'No user found with this email.';
       case 'wrong-password':
-        return 'Incorrect password.';
-      case 'invalid-credential':
-        return 'Invalid credentials. Please check and try again.';
+        return 'This supplied authentication credential is incorrect.';
+      case 'invalid-credential': // Firebase SDK variant
+      case 'invalid-login-credentials': // REST variant
+        return 'This supplied authentication credential is incorrect.';
       case 'too-many-requests':
         return 'Too many attempts. Try again later.';
       case 'network-request-failed':
@@ -61,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _looksLikeEmail(String value) =>
       RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value);
 
-  // 🔐 Login logic
+  // 🔐 Perform login
   Future<void> _login() async {
     FocusScope.of(context).unfocus();
     setState(() => _errorText = null);
@@ -77,7 +78,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      // ✅ On success → go to MenuScreen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MenuScreen()),
@@ -118,8 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 8),
-
-                // ✨ Greeting header
+                // --- Header ---
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -152,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 14),
 
-                // 🔑 Login form
+                // --- Form Card ---
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -218,9 +217,25 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
 
-                      const SizedBox(height: 12),
+                      // Forgot password
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ForgotPasswordScreen(),
+                            ),
+                          ),
+                          child: const Text(
+                            'Forgot password?',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
 
                       if (_errorText != null) ...[
+                        const SizedBox(height: 4),
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
@@ -239,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                       ],
 
                       SizedBox(
@@ -258,8 +273,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   width: 22,
                                   height: 22,
                                   child: CircularProgressIndicator(
-                                    strokeWidth: 2,
                                     color: Colors.white,
+                                    strokeWidth: 2,
                                   ),
                                 )
                               : const Text(
@@ -268,9 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                         ),
                       ),
-
                       const SizedBox(height: 12),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -278,8 +291,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextButton(
                             onPressed: _loading
                                 ? null
-                                : () => Navigator.of(context)
-                                    .pushNamed('/register'),
+                                : () =>
+                                    Navigator.of(context).pushNamed('/register'),
                             child: const Text(
                               'Create account',
                               style: TextStyle(fontWeight: FontWeight.w900),
