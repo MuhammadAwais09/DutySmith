@@ -1,6 +1,4 @@
-Below is a **professional GitHub `README.md`** for your project **Duty Smith**, aligned with the SRS you provided. You can copy-paste this directly into your repository.
 
----
 
 # 🛠️ Duty Smith
 
