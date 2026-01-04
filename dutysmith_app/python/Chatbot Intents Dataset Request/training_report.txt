@@ -1,0 +1,8 @@
+CHATBOT TRAINING REPORT
+=======================
+Date: 2026-01-04 23:17:40.641270
+Epochs: 150
+Final Training Accuracy: 1.0000
+Final Validation Accuracy: 1.0000
+Vocabulary Size: 130
+Number of Intents: 8

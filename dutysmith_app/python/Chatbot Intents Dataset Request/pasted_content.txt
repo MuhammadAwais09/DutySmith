@@ -1,0 +1,309 @@
+Soware Requirements Specification (SRS)
+Staff Appointment & Duty Management System with
+Employee Assistance Chatbot
+Version: Date: December ,  Author:
+. Introduction
+. Purpose
+The purpose of this Software Requirements Specification (SRS) document is to detail the
+functional and non-functional requirements for the Staff Appointment & Duty
+Management System with Employee Assistance Chatbot Using Machine Learning. This
+document serves as the foundational agreement for the development team, stakeholders,
+and users, ensuring a clear understanding of the system's capabilities and constraints.
+. Scope
+The system is a dual-component, integrated digital solution designed to overcome the
+challenges of manual staff data management, including duties, appointments, attendance,
+and leave records  . The scope encompasses the development of:
+. An Administrative Web Portal for management and scheduling.
+. A Flutter-based Employee Mobile Application for staff access.
+. An AI-powered Chatbot Interface using Machine Learning (ML) and Natural Language
+Processing (NLP) for instant, conversational employee assistance.
+. A Central Database (Firebase) to synchronize data between all components.
+. Definitions, Acronyms, and Abbreviations
+Term Definition
+SRS Software Requirements Specification
+ML Machine Learning
+NLP Natural Language Processing
+API Application Programming Interface
+1.0 solutionwing.io
+UI User Interface
+CRUD Create, Read, Update, Delete
+Admin Portal
+The web application used by administrators for
+management tasks.
+Chatbot
+The AI-powered component that responds to
+employee queries.
+. References
+[] Project Description Document: "STAFF APPOINTMENT & DUTY MANAGEMENT SYSTEM
+WITH EMPLOYEE ASSISTANCE CHATBOT USING MACHINE LEARNING" (pasted_content.txt)
+. Overall Description
+. Product Perspective
+The system is a new, standalone product that will replace existing manual or disparate
+systems for HR and duty management. It is designed as an integrated ecosystem where the
+administrative functions and the employee assistance functions share a single,
+authoritative data source.
+. Product Functions
+The primary functions of the system are to:
+• Automate staff appointment and duty scheduling via an intuitive admin portal.
+• Maintain accurate, centralized records of employee data, leave, attendance, and shift
+information.
+• Provide instant, personalized information access to employees through a
+conversational chatbot interface.
+• Improve communication efficiency and reduce the administrative workload on HR staff.
+. User Characteristics
+User Role Primary Responsibilities Key Needs
+Administrator
+(HR/Management)
+Employee management, duty
+assignment, leave approval,
+A robust, secure, and intuitive
+web interface for data
+report generation. management and reporting.
+Employee
+Viewing schedules, applying
+for leave, checking personal
+records (attendance, leave
+balance).
+A user-friendly mobile app
+with instant, accurate access
+to personalized information
+via a chatbot.
+. General Constraints
+• Technology Stack: The system must be developed using the following specific
+technologies:
+• Frontend (Web): HTML, CSS, JS, or a modern framework (e.g., React/Angular)
+interacting with the Flask Backend.
+• Mobile App: Flutter (Dart).
+• Backend: Python with Flask (for Admin Portal and ML/NLP API endpoints).
+• Database: Firebase Realtime Database or Firestore (NoSQL structure).
+• Machine Learning: Libraries such as scikit-learn, NLTK, spaCy, or TensorFlow
+(Integrated with the Flask Backend).
+• Integration: All components must integrate seamlessly via REST APIs and the Firebase
+database.
+• Performance: Chatbot responses must be near real-time to ensure a positive user
+experience.
+. Assumptions and Dependencies
+• Data Integrity: It is assumed that administrators will input and maintain accurate data
+in the Admin Portal.
+• API Stability: The system is dependent on stable API communication between the Flask
+backend, Firebase, and the ML/NLP Engine.
+• ML Model Training: The ML model for Intent Detection and Entity Extraction will
+require an initial dataset for training and continuous refinement.
+. Specific Requirements
+. Functional Requirements
+.. Admin Web Portal Requirements
+ID Function Description
+FR-A.
+Employee Management
+(CRUD)
+Allow administrators to Add,
+Edit, and Delete staff
+profiles, including details like
+name, department,
+credentials, and shift
+preference.
+FR-A.
+Appointment/Duty
+Management (CRUD)
+Allow administrators to
+Create, Update, or Cancel
+staff appointments or duty
+schedules, specifying
+employee, date, time, and
+description.
+FR-A. Attendance Tracking
+Provide a mechanism for
+administrators to Record and
+view daily employee
+attendance status.
+FR-A. Leave Management
+Allow administrators to
+Approve or Reject digital
+leave applications submitted
+by employees.
+FR-A. Report Export
+Enable the generation and
+export of reports (e.g.,
+attendance records, duty
+schedules) in common
+formats like PDF or Excel.
+.. Employee Mobile App Requirements
+ID Feature Description
+FR-E. Secure Authentication
+Employees must be able to
+access the app through
+secure credentials (Login),
+ideally via Firebase
+Authentication.
+FR-E. View Schedule Display the employee's
+assigned duties and
+appointments in a clear,
+chronological format.
+FR-E. Apply for Leave
+Allow employees to Submit
+leave requests digitally,
+specifying dates and type of
+leave.
+FR-E. Receive Notifications
+Provide real-time updates
+about leave approvals, duty
+changes, or other system
+alerts, leveraging Firebase
+Cloud Messaging (FCM).
+FR-E. Chatbot Access
+Provide a dedicated interface
+to interact with the
+Employee Assistance
+Chatbot using natural
+language queries.
+.. Chatbot Module Requirements (ML Component)
+ID Sub-Module Description
+FR-C. NLP Preprocessing
+The system must tokenize
+and clean raw user query text
+before processing.
+FR-C. Intent Detection
+An ML model must accurately
+classify the user's intent (e.g.,
+CheckLeaveBalance ,
+GetDutySchedule ,
+ShowAttendance ).
+FR-C. Entity Extraction
+The system must identify key
+entities within the query
+(e.g., date ranges, "my shift")
+to parameterize database
+queries.
+FR-C. Database Querying
+The system must map the
+detected intent and entities
+to a secure Firebase query
+to fetch the required data
+from the Central Database.
+FR-C. Response Generation
+The system must convert raw
+database results into a
+friendly, natural language
+response for the employee.
+. Non-Functional Requirements
+Category ID Requirement
+Performance NFR-P.
+Chatbot response time must
+be under  seconds for % of
+all queries.
+NFR-P.
+The Admin Portal must load
+and process reports for up to
+, employees within
+seconds.
+Security NFR-S.
+All user authentication
+(Admin and Employee) must
+use Firebase Authentication
+and industry-standard secure
+practices.
+NFR-S.
+Data transmission between
+all components (Web, Mobile,
+Flask Backend, Firebase)
+must be encrypted (e.g.,
+HTTPS/SSL).
+NFR-S.
+The system must enforce rolebased access control (RBAC)
+using Firebase Security Rules
+to ensure employees can only
+access their own data.
+Usability NFR-U.
+The Admin Web Portal must
+be intuitive, requiring
+minimal training for HR staff.
+NFR-U.
+The Employee Mobile App
+must be simple and
+accessible for all staff
+members.
+Maintainability NFR-M.
+The system must be
+developed with a modular
+architecture to allow for
+independent updates to the
+Admin Portal, Mobile App,
+and Chatbot components.
+Scalability NFR-S.
+The Firebase architecture
+must be capable of scaling to
+support up to ,
+concurrent users.
+. System Architecture and Flow Diagram
+. System Components
+The system is composed of four main, interconnected components:
+. Admin Web Portal (Flask/Web Frontend): The management interface.
+. Employee Mobile App (Flutter): The user-facing application, including the Chatbot
+Interface.
+. Central Database (Firebase): The single source of truth for all employee, duty, and
+record data.
+. ML/NLP Engine (Flask Endpoint): The service responsible for processing natural
+language queries and generating responses.
+. Core Database Collections/Nodes (Firebase)
+The Central Database (Firebase) will include, but not be limited to, the following core
+Collections/Nodes (structured as a NoSQL database):
+Collection/Node Key Fields Description
+Employee
+uid (Firebase Auth ID),
+name , department ,
+shift_preference
+Core employee information
+and authentication details.
+Appointment/Duty
+duty_id , emp_id , date ,
+time_start , time_end ,
+description
+Records of assigned duties or
+appointments.
+Attendance
+attendance_id , emp_id , date ,
+status
+Daily presence or absence
+records.
+Leave
+leave_id , emp_id , start_date ,
+end_date , status ,
+remaining_leaves
+Stores leave applications and
+current leave balances.
+Notification
+notif_id , emp_id , message ,
+date_time
+Alerts for updates and
+approvals.
+. System Flow Diagram
+The following diagram illustrates the high-level interaction and data flow between the
+system's main components, highlighting the separate workflows for administration, general
+employee use, and the intelligent chatbot interaction.
+Workflow Description:
+. Admin Workflow: The Admin Web Portal (Flask) manages all core data (Employee,
+Duty, Leave) by writing to and reading from the Central Database (Firebase).
+. Employee Workflow: The Employee Mobile App (Flutter) allows employees to view
+their schedules and apply for leave, with data flowing directly to and from the Central
+Database (Firebase).
+. Chatbot Workflow:
+• An employee submits a natural language query via the Chatbot Interface.
+• The query is routed to the ML/NLP Engine (Flask) for Intent/Entity Detection.
+• The engine translates the intent into a Firebase Query.
+• The Central Database (Firebase) returns the result to the ML/NLP Engine.
+• The engine generates a Natural Language Response and sends it back to the
+employee.
+. Synchronization: The Central Database (Firebase) acts as the single point of truth,
+ensuring that any updates made by the Admin Portal are instantly reflected in the data
+retrieved by the Employee App and the Chatbot.
+. Future Enhancements
+The following features are considered out of scope for the initial release (Version .) but
+are planned for future development:
+• Enable voice interaction with the chatbot.
+• Integrate predictive analytics for staff workload distribution.
+• Implement multi-language support for diverse staff members.
+• Allow the chatbot to initiate actions (e.g., leave application, duty change requests)
+rather than just providing information.
+
+
+give me chatbot intents.json file..
