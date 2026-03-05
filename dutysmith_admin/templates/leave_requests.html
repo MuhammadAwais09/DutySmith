@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Requests - Duty Smith Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Leave Requests</h2>
+            <p class="text-muted mb-0">Review and manage employee leave applications</p>
+        </div>
+        <div class="d-flex gap-2">
+            <span class="badge bg-warning fs-6">
+                <i class="bi bi-hourglass me-2"></i>{{ requests|selectattr('status', 'equalto', 'pending')|list|length }} Pending
+            </span>
+        </div>
+    </div>
+
+    <!-- Leave Requests Table -->
+    <div class="custom-table">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-header">
+                    <tr>
+                        <th class="py-3 px-4">Employee</th>
+                        <th class="py-3">Leave Period</th>
+                        <th class="py-3">Days</th>
+                        <th class="py-3">Reason</th>
+                        <th class="py-3">Requested</th>
+                        <th class="py-3">Status</th>
+                        <th class="py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                    <tr class="align-middle">
+                        <td class="py-3 px-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="bi bi-person text-primary"></i>
+                                </div>
+                                <div>
+                                    <span class="fw-medium">{{ req.employeeName }}</span>
+                                    <small class="text-muted d-block">{{ req.employeeId[:8] }}...</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="badge bg-light text-dark mb-1">
+                                    <i class="bi bi-calendar me-1"></i>{{ req.startDate }}
+                                </span>
+                                <small class="text-muted text-center">to</small>
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-calendar me-1"></i>{{ req.endDate }}
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">
+                                {{ ((req.endDate|strptime('%Y-%m-%d') - req.startDate|strptime('%Y-%m-%d')).days + 1) if req.startDate and req.endDate else '?' }} days
+                            </span>
+                        </td>
+                        <td>
+                            <span class="text-truncate d-inline-block" style="max-width: 150px;" 
+                                  title="{{ req.reason }}">{{ req.reason }}</span>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                {{ req.requestedAt[:10] if req.requestedAt else 'Unknown' }}
+                            </small>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if req.status == 'approved' else 'warning' if req.status == 'pending' else 'danger' }}">
+                                {{ req.status.title() }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            {% if req.status == 'pending' %}
+                            <button class="btn btn-sm btn-success me-1" onclick="approveLeave('{{ req.id }}')">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="rejectLeave('{{ req.id }}')">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                            {% else %}
+                            <small class="text-muted">
+                                By {{ req.approvedBy[:8] if req.approvedBy else 'System' }}...
+                            </small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-inbox fs-1 text-muted mb-3 d-block"></i>
+                            <p class="text-muted">No leave requests found</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+async function approveLeave(reqId) {
+    if (!confirm('Approve this leave request?')) return;
+    
+    try {
+        const response = await fetch(`/api/leave-requests/${reqId}/approve`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to approve'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function rejectLeave(reqId) {
+    if (!confirm('Reject this leave request?')) return;
+    
+    try {
+        const response = await fetch(`/api/leave-requests/${reqId}/reject`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to reject'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

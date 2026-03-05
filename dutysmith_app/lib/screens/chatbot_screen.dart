@@ -31,7 +31,7 @@ class ChatbotScreen extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: ChatBubble(
-                      text: 'Hello! How can I assist you today?',
+                      text: 'Hi! How can I assist you today?',
                       isUser: false,
                     ),
                   ),

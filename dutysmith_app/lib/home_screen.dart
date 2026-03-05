@@ -32,7 +32,7 @@ class HomeScreen extends StatelessWidget {
         ),
         body: Center(
           child: Text(
-            'Logged in as:\n${user?.email ?? 'Unknown'}',
+            'Hello:\n${user?.email ?? 'Unknown'}',
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16),
           ),
