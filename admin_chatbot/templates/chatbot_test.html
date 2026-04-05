@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}AI Chatbot - Duty Smith Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">
+                <i class="bi bi-robot me-2"></i>AI Employee Assistant
+            </h2>
+            <p class="text-muted mb-0">Test and interact with the chatbot</p>
+        </div>
+        <div>
+            <span class="badge bg-{{ 'success' if chatbot_enabled else 'warning' }} fs-6 me-2">
+                <i class="bi bi-{{ 'check-circle' if chatbot_enabled else 'exclamation-triangle' }} me-1"></i>
+                {{ 'ML Model Active' if chatbot_enabled else 'Fallback Mode' }}
+            </span>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearChat()">
+                <i class="bi bi-trash me-1"></i>Clear
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Chat Interface -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
+                            <i class="bi bi-robot fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Employee Assistant Bot</h6>
+                            <small class="opacity-75">
+                                <span class="status-dot bg-success"></span> Online
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chat Messages -->
+                <div id="chatbox" class="card-body" style="height: 450px; overflow-y: auto; background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);">
+                    <div class="welcome-message text-center py-4">
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="bi bi-robot text-primary fs-1"></i>
+                        </div>
+                        <h5 class="text-primary">Hello! I'm your Assistant</h5>
+                        <p class="text-muted mb-3">Ask me about duties, leave balance, or attendance</p>
+                        <div class="d-flex flex-wrap justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-primary" onclick="sendQuick('What is my duty today?')">📅 Today's Duty</button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="sendQuick('Check my leave balance')">🏖️ Leave Balance</button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="sendQuick('Help')">❓ Help</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Input -->
+                <div class="card-footer bg-white border-top p-3">
+                    <div class="input-group">
+                        <input type="text" id="userMessage" class="form-control form-control-lg border-2" 
+                               placeholder="Type your message..." 
+                               onkeypress="if(event.key==='Enter') sendMessage()">
+                        <button class="btn btn-primary btn-lg px-4" onclick="sendMessage()">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Intent Analysis -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-info text-white py-2">
+                    <h6 class="mb-0"><i class="bi bi-graph-up me-2"></i>Intent Analysis</h6>
+                </div>
+                <div class="card-body" id="intentAnalysis">
+                    <p class="text-muted text-center small mb-0 py-3">Send a message to see analysis</p>
+                </div>
+            </div>
+
+            <!-- Quick Tests -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-secondary text-white py-2">
+                    <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Tests</h6>
+                </div>
+                <div class="card-body p-2">
+                    <div class="d-grid gap-1">
+                        <button class="btn btn-sm btn-outline-primary text-start" onclick="sendQuick('Hello')">👋 Greeting</button>
+                        <button class="btn btn-sm btn-outline-primary text-start" onclick="sendQuick('How many leaves do I have?')">🏖️ Leave Balance</button>
+                        <button class="btn btn-sm btn-outline-primary text-start" onclick="sendQuick('What is my duty today?')">📅 Today's Duty</button>
+                        <button class="btn btn-sm btn-outline-primary text-start" onclick="sendQuick('Show my attendance')">✅ Attendance</button>
+                        <button class="btn btn-sm btn-outline-primary text-start" onclick="sendQuick('How do I apply for leave?')">📝 Apply Leave</button>
+                        <button class="btn btn-sm btn-outline-primary text-start" onclick="sendQuick('Help')">❓ Help</button>
+                        <button class="btn btn-sm btn-outline-primary text-start" onclick="sendQuick('Goodbye')">👋 Goodbye</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-dark text-white py-2">
+                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>System Status</h6>
+                </div>
+                <div class="card-body small">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Model:</span>
+                        <span class="badge bg-{{ 'success' if chatbot_enabled else 'warning' }}">{{ 'TensorFlow' if chatbot_enabled else 'Fallback' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Response Time:</span>
+                        <span id="responseTime">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Messages:</span>
+                        <span id="messageCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.message { margin-bottom: 15px; animation: slideIn 0.3s ease; }
+.message-user { display: flex; justify-content: flex-end; }
+.message-bot { display: flex; justify-content: flex-start; }
+.bubble { max-width: 75%; padding: 12px 16px; border-radius: 18px; word-wrap: break-word; white-space: pre-wrap; }
+.bubble-user { background: linear-gradient(135deg, #1F8FF4 0%, #0A2A4E 100%); color: white; border-bottom-right-radius: 4px; }
+.bubble-bot { background: white; color: #333; border: 1px solid #e0e0e0; border-bottom-left-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.typing { display: flex; gap: 4px; padding: 12px 16px; }
+.typing span { width: 8px; height: 8px; background: #999; border-radius: 50%; animation: typing 1s infinite; }
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+</style>
+
+<script>
+let messageCount = 0;
+
+function sendMessage() {
+    const input = document.getElementById('userMessage');
+    const message = input.value.trim();
+    if (!message) return;
+    
+    input.value = '';
+    addMessage(message, 'user');
+    showTyping();
+    
+    const startTime = Date.now();
+    
+    fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message })
+    })
+    .then(res => res.json())
+    .then(data => {
+        hideTyping();
+        document.getElementById('responseTime').textContent = (Date.now() - startTime) + 'ms';
+        
+        if (data.success) {
+            addMessage(data.response, 'bot');
+            updateIntents(data.intents);
+            document.getElementById('messageCount').textContent = ++messageCount;
+        } else {
+            addMessage('Error: ' + data.error, 'bot');
+        }
+    })
+    .catch(err => {
+        hideTyping();
+        addMessage('Connection error. Please try again.', 'bot');
+    });
+}
+
+function sendQuick(msg) {
+    document.getElementById('userMessage').value = msg;
+    sendMessage();
+}
+
+function addMessage(text, sender) {
+    const chatbox = document.getElementById('chatbox');
+    const welcome = chatbox.querySelector('.welcome-message');
+    if (welcome) welcome.remove();
+    
+    const div = document.createElement('div');
+    div.className = `message message-${sender}`;
+    div.innerHTML = `<div class="bubble bubble-${sender}">${text}</div>`;
+    chatbox.appendChild(div);
+    chatbox.scrollTop = chatbox.scrollHeight;
+}
+
+function showTyping() {
+    const chatbox = document.getElementById('chatbox');
+    const div = document.createElement('div');
+    div.id = 'typing';
+    div.className = 'message message-bot';
+    div.innerHTML = '<div class="bubble bubble-bot typing"><span></span><span></span><span></span></div>';
+    chatbox.appendChild(div);
+    chatbox.scrollTop = chatbox.scrollHeight;
+}
+
+function hideTyping() {
+    const el = document.getElementById('typing');
+    if (el) el.remove();
+}
+
+function updateIntents(intents) {
+    const el = document.getElementById('intentAnalysis');
+    if (!intents || !intents.length) {
+        el.innerHTML = '<p class="text-muted text-center small mb-0">No intent detected</p>';
+        return;
+    }
+    
+    let html = '';
+    intents.slice(0, 3).forEach((intent, i) => {
+        const pct = (intent.probability * 100).toFixed(1);
+        const color = i === 0 ? 'success' : i === 1 ? 'info' : 'secondary';
+        html += `
+            <div class="mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="badge bg-${color}">${intent.intent}</span>
+                    <small class="text-muted">${pct}%</small>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-${color}" style="width: ${pct}%"></div>
+                </div>
+            </div>`;
+    });
+    el.innerHTML = html;
+}
+
+function clearChat() {
+    document.getElementById('chatbox').innerHTML = `
+        <div class="welcome-message text-center py-4">
+            <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                <i class="bi bi-robot text-primary fs-1"></i>
+            </div>
+            <h5 class="text-primary">Hello! I'm your Assistant</h5>
+            <p class="text-muted mb-3">Ask me about duties, leave balance, or attendance</p>
+        </div>`;
+    document.getElementById('intentAnalysis').innerHTML = '<p class="text-muted text-center small mb-0 py-3">Send a message to see analysis</p>';
+    messageCount = 0;
+    document.getElementById('messageCount').textContent = '0';
+    document.getElementById('responseTime').textContent = '-';
+}
+</script>
+{% endblock %}

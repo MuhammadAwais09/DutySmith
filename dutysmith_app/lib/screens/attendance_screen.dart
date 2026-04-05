@@ -1,53 +1,103 @@
+// lib/screens/attendance_screen.dart
 import 'package:flutter/material.dart';
-import 'package:dutysmith_app/core/theme/app_colors.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
+import '../services/database_service.dart';
+import '../models/attendance_model.dart';
+import '../utils/constants.dart';
+import '../utils/helpers.dart';
+import '../utils/app_colors.dart'; // ✅ FIXED
 
 class AttendanceScreen extends StatelessWidget {
   const AttendanceScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text(
-              'Attendance Records',
-              style: TextStyle(
-                  color: AppColors.primaryDarkBlue,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold),
+    final user = Provider.of<AppProvider>(context).currentUser;
+
+    if (user == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return StreamBuilder<List<AttendanceModel>>(
+      stream: DatabaseService().getAttendanceStream(user.uid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final attendance = snapshot.data ?? [];
+
+        if (attendance.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.fact_check_outlined,
+                  size: 80,
+                  color: Colors.grey.shade300,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'No attendance records yet',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView.builder(
-                itemCount: 10,
-                itemBuilder: (context, i) {
-                  final status = i % 3 == 0
-                      ? 'Absent'
-                      : i % 2 == 0
-                          ? 'Late'
-                          : 'Present';
-                  final color = status == 'Present'
-                      ? Colors.green
-                      : status == 'Late'
-                          ? Colors.orange
-                          : Colors.red;
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    child: ListTile(
-                      leading: Icon(Icons.calendar_today, color: AppColors.accentBrightBlue),
-                      title: Text('Date: 2025-12-${10 + i}'),
-                      trailing: Text(status, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: attendance.length,
+          itemBuilder: (context, index) {
+            final record = attendance[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Helpers.getStatusColor(record.status).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Helpers.getStatusIcon(record.status),
+                    color: Helpers.getStatusColor(record.status),
+                  ),
+                ),
+                title: Text(
+                  Helpers.formatDate(record.date),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  '${record.checkIn != null ? Helpers.formatTime(record.checkIn!) : '--'} - '
+                  '${record.checkOut != null ? Helpers.formatTime(record.checkOut!) : '--'}',
+                ),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Helpers.getStatusColor(record.status).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    record.status.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Helpers.getStatusColor(record.status),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
-            )
-          ]),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 }

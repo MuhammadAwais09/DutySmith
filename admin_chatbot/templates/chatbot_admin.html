@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}AI Admin Assistant - Duty Smith{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Employee Sidebar -->
+        <div class="col-md-3 col-lg-2 bg-light border-end" style="min-height: calc(100vh - 60px);">
+            <div class="p-3">
+                <h6 class="fw-bold mb-3"><i class="bi bi-people me-2"></i>Select Employee</h6>
+                <input type="text" class="form-control form-control-sm mb-3" id="searchEmp" 
+                       placeholder="🔍 Search..." onkeyup="filterEmployees()">
+                <div id="employeeList" class="list-group list-group-flush" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="col-md-9 col-lg-10 p-0">
+            <div class="d-flex flex-column h-100">
+                <!-- Header -->
+                <div class="bg-primary text-white p-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-robot fs-3 me-3"></i>
+                        <div>
+                            <h5 class="mb-0">AI Admin Assistant</h5>
+                            <small class="opacity-75">Ask about leaves, duties, attendance & more</small>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-success" id="modelStatus">● Online</span>
+                        <button class="btn btn-light btn-sm ms-2" onclick="clearChat()">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Messages -->
+                <div id="chatMessages" class="flex-grow-1 p-4" style="overflow-y: auto; background: #f8f9fa; min-height: 500px;">
+                    <div class="text-center py-5">
+                        <i class="bi bi-robot text-primary" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3 text-primary">Welcome to AI Assistant</h4>
+                        <p class="text-muted">Select an employee from the sidebar to get personalized insights</p>
+                        <div class="mt-3">
+                            <span class="badge bg-primary me-1">"Check leave balance"</span>
+                            <span class="badge bg-info me-1">"Show upcoming duties"</span>
+                            <span class="badge bg-success">"Attendance report"</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white border-top p-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <small class="text-muted me-2 align-self-center">Quick:</small>
+                        <button class="btn btn-outline-primary btn-sm" onclick="quickAsk('leave balance')" id="btnLeave">Leave Balance</button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="quickAsk('upcoming duties')" id="btnDuties">Upcoming Duties</button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="quickAsk('attendance report')" id="btnAttendance">Attendance</button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="quickAsk('performance summary')" id="btnPerformance">Performance</button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="quickAsk('contact info')" id="btnContact">Contact Info</button>
+                    </div>
+                </div>
+
+                <!-- Input -->
+                <div class="bg-white p-3 border-top">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-primary text-white" id="activeEmployeeBadge" style="display: none;">
+                            <i class="bi bi-person-fill me-1"></i>
+                            <span id="activeEmployeeName"></span>
+                            <button type="button" class="btn-close btn-close-white ms-2" onclick="clearSelection()" style="font-size: 0.5rem;"></button>
+                        </span>
+                        <input type="text" id="messageInput" class="form-control" 
+                               placeholder="Type your question..." 
+                               onkeypress="if(event.key==='Enter') sendMessage()">
+                        <button class="btn btn-primary" onclick="sendMessage()">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted mt-1 d-block">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Tip: You can also type "What is [Employee Name]'s leave balance?" without selecting
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.message { margin-bottom: 15px; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.message-user { display: flex; justify-content: flex-end; }
+.message-bot { display: flex; justify-content: flex-start; }
+.bubble { max-width: 70%; padding: 12px 18px; border-radius: 15px; }
+.bubble-user { background: #1F8FF4; color: white; border-bottom-right-radius: 5px; }
+.bubble-bot { background: white; border: 1px solid #dee2e6; border-bottom-left-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.employee-item { cursor: pointer; transition: all 0.2s; }
+.employee-item:hover, .employee-item.active { background: #1F8FF4 !important; color: white !important; }
+.typing { display: flex; gap: 4px; }
+.typing span { width: 8px; height: 8px; background: #999; border-radius: 50%; animation: bounce 1s infinite; }
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+</style>
+
+<script>
+let selectedEmployee = null;
+let employees = [];
+
+// Load employees
+fetch('/api/chatbot/employees')
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            employees = data.employees;
+            renderList(employees);
+        }
+    });
+
+function renderList(list) {
+    const container = document.getElementById('employeeList');
+    if (list.length === 0) {
+        container.innerHTML = '<div class="p-3 text-center text-muted"><small>No employees found</small></div>';
+        return;
+    }
+    
+    container.innerHTML = list.map(emp => `
+        <a href="#" class="list-group-item list-group-item-action employee-item ${selectedEmployee === emp.uid ? 'active' : ''}" 
+           onclick="selectEmployee('${emp.uid}', '${emp.name}'); return false;" data-name="${emp.name.toLowerCase()}">
+            <div class="d-flex w-100 justify-content-between">
+                <h6 class="mb-1">${emp.name}</h6>
+                <small class="opacity-75">${emp.type}</small>
+            </div>
+            <small class="${selectedEmployee === emp.uid ? 'text-white' : 'text-muted'}">${emp.department}</small>
+        </a>
+    `).join('');
+}
+
+function filterEmployees() {
+    const q = document.getElementById('searchEmp').value.toLowerCase();
+    renderList(employees.filter(e => e.name.toLowerCase().includes(q) || e.department.toLowerCase().includes(q)));
+}
+
+function selectEmployee(uid, name) {
+    selectedEmployee = uid;
+    document.getElementById('activeEmployeeBadge').style.display = 'flex';
+    document.getElementById('activeEmployeeName').textContent = name;
+    renderList(employees);
+    updateQuickButtons(name);
+    document.getElementById('messageInput').focus();
+}
+
+function clearSelection() {
+    selectedEmployee = null;
+    document.getElementById('activeEmployeeBadge').style.display = 'none';
+    renderList(employees);
+    updateQuickButtons(null);
+}
+
+function updateQuickButtons(name) {
+    const suffix = name ? ` for ${name}` : '';
+    document.getElementById('btnLeave').textContent = 'Leave Balance' + suffix;
+    document.getElementById('btnDuties').textContent = 'Upcoming Duties' + suffix;
+    document.getElementById('btnAttendance').textContent = 'Attendance' + suffix;
+    document.getElementById('btnPerformance').textContent = 'Performance' + suffix;
+    document.getElementById('btnContact').textContent = 'Contact Info' + suffix;
+}
+
+function quickAsk(query) {
+    let msg = query;
+    if (selectedEmployee) {
+        const name = document.getElementById('activeEmployeeName').textContent;
+        msg = `${name}'s ${query}`;
+    }
+    document.getElementById('messageInput').value = msg;
+    sendMessage();
+}
+
+function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    
+    input.value = '';
+    addMsg(msg, 'user');
+    showTyping();
+    
+    fetch('/api/chatbot/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            message: msg,
+            employee_id: selectedEmployee
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideTyping();
+        if (data.success) {
+            addMsg(data.response, 'bot');
+        } else {
+            addMsg('❌ Error: ' + data.error, 'bot');
+        }
+    })
+    .catch(() => {
+        hideTyping();
+        addMsg('❌ Connection error. Please try again.', 'bot');
+    });
+}
+
+function addMsg(text, sender) {
+    const container = document.getElementById('chatMessages');
+    if (container.querySelector('.text-center.py-5')) {
+        container.innerHTML = '';
+    }
+    
+    const div = document.createElement('div');
+    div.className = `message message-${sender}`;
+    div.innerHTML = `<div class="bubble bubble-${sender}">${text}</div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.id = 'typing';
+    div.className = 'message message-bot';
+    div.innerHTML = '<div class="bubble bubble-bot"><div class="typing"><span></span><span></span><span></span></div></div>';
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function hideTyping() {
+    const el = document.getElementById('typing');
+    if (el) el.remove();
+}
+
+function clearChat() {
+    document.getElementById('chatMessages').innerHTML = `
+        <div class="text-center py-5">
+            <i class="bi bi-robot text-primary" style="font-size: 4rem;"></i>
+            <h4 class="mt-3 text-primary">Chat Cleared</h4>
+            <p class="text-muted">Select an employee to start a new conversation</p>
+        </div>
+    `;
+}
+</script>
+{% endblock %}

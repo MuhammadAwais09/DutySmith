@@ -1,189 +1,165 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
+// lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
-import 'package:dutysmith_app/core/theme/app_colors.dart';
-
-class ProfileScreen extends StatefulWidget {
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
+import '../utils/constants.dart';
+import '../utils/app_colors.dart'; // ✅ FIXED
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  Widget build(BuildContext context) {
+    final user = Provider.of<AppProvider>(context).currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Profile Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.primaryDarkBlue, AppColors.primaryBlue],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    child: Text(
+                      user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    user.name,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user.email,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Info Cards
+            _InfoTile(icon: Icons.badge, title: 'Type', value: user.type),
+            _InfoTile(
+              icon: Icons.business,
+              title: 'Department',
+              value: user.department ?? 'Not assigned',
+            ),
+            _InfoTile(
+              icon: Icons.beach_access,
+              title: 'Leave Balance',
+              value: '${user.leaveBalance} Days',
+            ),
+            _InfoTile(
+              icon: Icons.phone,
+              title: 'Phone',
+              value: user.phone ?? 'Not provided',
+            ),
+            _InfoTile(
+              icon: Icons.calendar_today,
+              title: 'Member Since',
+              value: user.createdAt?.split('T')[0] ?? 'N/A',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  Map<String, dynamic>? _userData;
-  bool _loading = true;
-  String? _errorText;
-  final _auth = FirebaseAuth.instance;
+class _InfoTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadProfile();
-  }
-
-  Future<void> _loadProfile() async {
-    try {
-      final user = _auth.currentUser;
-      if (user == null) {
-        setState(() {
-          _errorText = 'No authenticated user.';
-          _loading = false;
-        });
-        return;
-      }
-
-      final dbRef = FirebaseDatabase.instance.ref('users/${user.uid}');
-      final snapshot = await dbRef.get();
-      if (snapshot.exists) {
-        final data = Map<String, dynamic>.from(snapshot.value as Map);
-        setState(() {
-          _userData = data;
-          _loading = false;
-        });
-      } else {
-        setState(() {
-          _errorText = 'User profile not found.';
-          _loading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _errorText = 'Failed to load profile.';
-        _loading = false;
-      });
-    }
-  }
-
-  Future<void> _sendPasswordReset() async {
-    final user = _auth.currentUser;
-    if (user == null || user.email == null) return;
-
-    try {
-      await _auth.sendPasswordResetEmail(email: user.email!);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password reset link sent to your email.'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } on FirebaseAuthException catch (e) {
-      final msg = e.code == 'user-not-found'
-          ? 'No user found for this email.'
-          : e.message ?? 'Failed to send password reset email.';
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    }
-  }
+  const _InfoTile({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = _auth.currentUser;
-
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryDarkBlue,
-        foregroundColor: AppColors.white,
-        title: const Text('My Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Reload',
-            onPressed: _loadProfile,
-          )
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
-      body: SafeArea(
-        child: _loading
-            ? const Center(
-                child: CircularProgressIndicator(color: AppColors.accentBrightBlue),
-              )
-            : _errorText != null
-                ? Center(child: Text(_errorText!))
-                : _userData == null
-                    ? const Center(child: Text('No user data found.'))
-                    : Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: ListView(
-                          children: [
-                            // ---- Profile header ----
-                            ListTile(
-                              leading: const CircleAvatar(
-                                backgroundColor: AppColors.accentBrightBlue,
-                                radius: 28,
-                                child:
-                                    Icon(Icons.person, color: AppColors.white, size: 30),
-                              ),
-                              title: Text(
-                                _userData?['name'] ?? currentUser?.displayName ?? 'Unknown',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 18),
-                              ),
-                              subtitle: Text(
-                                _userData?['type'] ?? 'Employee',
-                                style: const TextStyle(color: AppColors.darkGrey),
-                              ),
-                            ),
-                            const Divider(),
-                            ListTile(
-                              leading: const Icon(Icons.email_outlined,
-                                  color: AppColors.darkGrey),
-                              title: Text(_userData?['email'] ?? currentUser?.email ?? ''),
-                            ),
-                            if (_userData?['type'] != null)
-                              ListTile(
-                                leading: const Icon(Icons.badge_outlined,
-                                    color: AppColors.darkGrey),
-                                title: Text('User Type: ${_userData!['type']}'),
-                              ),
-                            if (_userData?['department'] != null)
-                              ListTile(
-                                leading: const Icon(Icons.business_outlined,
-                                    color: AppColors.darkGrey),
-                                title:
-                                    Text('Department: ${_userData!['department']}'),
-                              ),
-                            const SizedBox(height: 8),
-                            // ---- Reset password section ----
-                            const Divider(),
-                            ListTile(
-                              leading: const Icon(Icons.lock_reset_rounded,
-                                  color: AppColors.accentBrightBlue),
-                              title: const Text('Reset Password'),
-                              subtitle: const Text(
-                                  'Send reset email to your registered address'),
-                              onTap: _sendPasswordReset,
-                            ),
-                            const Divider(),
-                            const SizedBox(height: 20),
-                            Text(
-                              'Account Info',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: AppColors.primaryDarkBlue,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'UID: ${currentUser?.uid ?? 'Unknown'}',
-                              style: const TextStyle(fontSize: 13, color: AppColors.darkGrey),
-                            ),
-                            if (_userData?['createdAt'] != null)
-                              Text(
-                                'Created: ${_userData!['createdAt'].toString()}',
-                                style: const TextStyle(
-                                    fontSize: 13, color: AppColors.darkGrey),
-                              ),
-                          ],
-                        ),
-                      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primaryBlue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.primaryBlue),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

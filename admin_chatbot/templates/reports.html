@@ -1,0 +1,616 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Analytics - Duty Smith Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s;
+        height: 100%;
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        border-color: var(--accent-bright-blue);
+    }
+
+    .report-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        margin-bottom: 15px;
+    }
+
+    .report-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--primary-dark-blue);
+        margin-bottom: 8px;
+    }
+
+    .report-desc {
+        color: #6c757d;
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+
+    .btn-generate {
+        background: var(--accent-bright-blue);
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+
+    .btn-generate:hover {
+        background: var(--primary-dark-blue);
+        color: white;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary-dark-blue) 0%, var(--accent-bright-blue) 100%);
+        color: white;
+    }
+
+    .btn-close-white {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    .filter-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .table-container {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .download-btn {
+        margin-right: 10px;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .stats-number {
+        font-size: 32px;
+        font-weight: bold;
+        color: var(--accent-bright-blue);
+    }
+
+    .stats-label {
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .loading-spinner {
+        display: none;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 64px;
+        margin-bottom: 20px;
+        color: #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-graph-up me-2"></i>Reports & Analytics</h2>
+    <div class="text-muted">
+        <i class="bi bi-calendar3 me-1"></i> {{ datetime.now().strftime('%B %d, %Y') }}
+    </div>
+</div>
+
+<!-- Report Cards -->
+<div class="row g-4">
+    <!-- Attendance Report -->
+    <div class="col-md-4">
+        <div class="report-card" onclick="openReportModal('attendance')">
+            <div class="report-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div class="report-title">Attendance Report</div>
+            <div class="report-desc">Daily, weekly, or monthly attendance summary with detailed check-in/out records</div>
+            <button class="btn btn-generate w-100">
+                <i class="bi bi-file-earmark-text me-1"></i> Generate Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Duty Schedule Report -->
+    <div class="col-md-4">
+        <div class="report-card" onclick="openReportModal('duties')">
+            <div class="report-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-calendar-week"></i>
+            </div>
+            <div class="report-title">Duty Schedule Report</div>
+            <div class="report-desc">Complete duty assignments by employee or date range with status tracking</div>
+            <button class="btn btn-generate w-100">
+                <i class="bi bi-file-earmark-text me-1"></i> Generate Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Leave Report -->
+    <div class="col-md-4">
+        <div class="report-card" onclick="openReportModal('leaves')">
+            <div class="report-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-journal-text"></i>
+            </div>
+            <div class="report-title">Leave Report</div>
+            <div class="report-desc">Leave requests and balance summary with approval status and history</div>
+            <button class="btn btn-generate w-100">
+                <i class="bi bi-file-earmark-text me-1"></i> Generate Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Employee Report -->
+    <div class="col-md-4">
+        <div class="report-card" onclick="openReportModal('employees')">
+            <div class="report-icon bg-info bg-opacity-10 text-info">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="report-title">Employee Report</div>
+            <div class="report-desc">Complete employee directory and details with contact information</div>
+            <button class="btn btn-generate w-100">
+                <i class="bi bi-file-earmark-text me-1"></i> Generate Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Performance Report -->
+    <div class="col-md-4">
+        <div class="report-card" onclick="openReportModal('performance')">
+            <div class="report-icon bg-danger bg-opacity-10 text-danger">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <div class="report-title">Performance Report</div>
+            <div class="report-desc">Attendance statistics and duty completion rates by employee</div>
+            <button class="btn btn-generate w-100">
+                <i class="bi bi-file-earmark-text me-1"></i> Generate Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Report -->
+    <div class="col-md-4">
+        <div class="report-card" onclick="openReportModal('custom')">
+            <div class="report-icon bg-secondary bg-opacity-10 text-secondary">
+                <i class="bi bi-sliders"></i>
+            </div>
+            <div class="report-title">Custom Report</div>
+            <div class="report-desc">Build custom report with advanced filters and data selection</div>
+            <button class="btn btn-generate w-100">
+                <i class="bi bi-file-earmark-text me-1"></i> Generate Report
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Generate Report</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Filters -->
+                <div class="filter-section">
+                    <h6 class="mb-3"><i class="bi bi-funnel me-2"></i>Filters</h6>
+                    <div class="row g-3" id="filterContainer">
+                        <!-- Dynamic filters will be inserted here -->
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary-custom" onclick="generateReport()">
+                            <span class="loading-spinner spinner-border spinner-border-sm me-1"></span>
+                            <i class="bi bi-search me-1"></i> Generate Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div id="reportResults">
+                    <div class="empty-state">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <h5>No Data Yet</h5>
+                        <p>Configure filters and click "Generate Report" to view data</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentReportType = '';
+    let reportData = [];
+    const modal = new bootstrap.Modal(document.getElementById('reportModal'));
+
+    function openReportModal(type) {
+        currentReportType = type;
+        const titles = {
+            'attendance': 'Attendance Report',
+            'duties': 'Duty Schedule Report',
+            'leaves': 'Leave Report',
+            'employees': 'Employee Report',
+            'performance': 'Performance Report',
+            'custom': 'Custom Report'
+        };
+        
+        document.getElementById('modalTitle').textContent = titles[type];
+        document.getElementById('reportResults').innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-file-earmark-text"></i>
+                <h5>No Data Yet</h5>
+                <p>Configure filters and click "Generate Report" to view data</p>
+            </div>
+        `;
+        
+        setupFilters(type);
+        modal.show();
+    }
+
+    function setupFilters(type) {
+        const container = document.getElementById('filterContainer');
+        let html = '';
+        
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (type === 'attendance') {
+            html = `
+                <div class="col-md-3">
+                    <label class="form-label">Report Type</label>
+                    <select class="form-select" id="filterType">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="filterStartDate" value="${today}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="filterEndDate" value="${today}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Employee (Optional)</label>
+                    <select class="form-select" id="filterEmployee">
+                        <option value="">All Employees</option>
+                    </select>
+                </div>
+            `;
+            loadEmployees();
+        } else if (type === 'duties') {
+            html = `
+                <div class="col-md-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="filterStartDate" value="${today}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="filterEndDate" value="${new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0]}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Employee (Optional)</label>
+                    <select class="form-select" id="filterEmployee">
+                        <option value="">All Employees</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="filterStatus">
+                        <option value="">All Status</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            `;
+            loadEmployees();
+        } else if (type === 'leaves') {
+            html = `
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="filterStatus">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="filterStartDate">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="filterEndDate">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Employee (Optional)</label>
+                    <select class="form-select" id="filterEmployee">
+                        <option value="">All Employees</option>
+                    </select>
+                </div>
+            `;
+            loadEmployees();
+        } else if (type === 'employees') {
+            html = `
+                <div class="col-md-4">
+                    <label class="form-label">Department</label>
+                    <input type="text" class="form-control" id="filterDepartment" placeholder="Filter by department">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Employee Type</label>
+                    <select class="form-select" id="filterType">
+                        <option value="">All Types</option>
+                        <option value="Student">Student</option>
+                        <option value="Staff">Staff</option>
+                        <option value="Faculty">Faculty</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="filterActive" checked>
+                        <label class="form-check-label" for="filterActive">Active employees only</label>
+                    </div>
+                </div>
+            `;
+        } else if (type === 'performance') {
+            html = `
+                <div class="col-md-4">
+                    <label class="form-label">Month</label>
+                    <input type="month" class="form-control" id="filterMonth" value="${today.substring(0, 7)}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Employee (Optional)</label>
+                    <select class="form-select" id="filterEmployee">
+                        <option value="">All Employees</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="alert alert-info mb-0 py-2">
+                        <small><i class="bi bi-info-circle me-1"></i> Shows attendance & duty stats</small>
+                    </div>
+                </div>
+            `;
+            loadEmployees();
+        } else if (type === 'custom') {
+            html = `
+                <div class="col-md-3">
+                    <label class="form-label">Data Source</label>
+                    <select class="form-select" id="filterSource">
+                        <option value="attendance">Attendance</option>
+                        <option value="duties">Duties</option>
+                        <option value="leaves">Leaves</option>
+                        <option value="employees">Employees</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="filterStartDate">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="filterEndDate">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Employee (Optional)</label>
+                    <select class="form-select" id="filterEmployee">
+                        <option value="">All</option>
+                    </select>
+                </div>
+            `;
+            loadEmployees();
+        }
+        
+        container.innerHTML = html;
+    }
+
+    async function loadEmployees() {
+        try {
+            const response = await fetch('/api/employees');
+            const data = await response.json();
+            
+            if (data.success) {
+                const select = document.getElementById('filterEmployee');
+                if (select) {
+                    data.employees.forEach(emp => {
+                        const option = document.createElement('option');
+                        option.value = emp.uid;
+                        option.textContent = emp.name;
+                        select.appendChild(option);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error loading employees:', error);
+        }
+    }
+
+    async function generateReport() {
+        const spinner = document.querySelector('.loading-spinner');
+        spinner.style.display = 'inline-block';
+        
+        try {
+            let url = `/api/reports/${currentReportType}?`;
+            const params = new URLSearchParams();
+            
+            // Collect filter values
+            const typeEl = document.getElementById('filterType');
+            const startDateEl = document.getElementById('filterStartDate');
+            const endDateEl = document.getElementById('filterEndDate');
+            const employeeEl = document.getElementById('filterEmployee');
+            const statusEl = document.getElementById('filterStatus');
+            const departmentEl = document.getElementById('filterDepartment');
+            const monthEl = document.getElementById('filterMonth');
+            const sourceEl = document.getElementById('filterSource');
+            
+            if (typeEl && typeEl.value) params.append('type', typeEl.value);
+            if (startDateEl && startDateEl.value) params.append('start_date', startDateEl.value);
+            if (endDateEl && endDateEl.value) params.append('end_date', endDateEl.value);
+            if (employeeEl && employeeEl.value) params.append('employee_id', employeeEl.value);
+            if (statusEl && statusEl.value) params.append('status', statusEl.value);
+            if (departmentEl && departmentEl.value) params.append('department', departmentEl.value);
+            if (monthEl && monthEl.value) params.append('month', monthEl.value);
+            if (sourceEl && sourceEl.value) params.append('source', sourceEl.value);
+            
+            url += params.toString();
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.success) {
+                reportData = data.data || [];
+                displayReportResults(data);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (error) {
+            alert('Error generating report: ' + error.message);
+        } finally {
+            spinner.style.display = 'none';
+        }
+    }
+
+    function displayReportResults(data) {
+        const container = document.getElementById('reportResults');
+        
+        if (!reportData || reportData.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>No records found for the selected filters.
+                </div>
+            `;
+            return;
+        }
+        
+        // Build summary stats if available
+        let statsHtml = '';
+        if (data.summary) {
+            statsHtml = '<div class="row g-3 mb-4">';
+            for (const [key, value] of Object.entries(data.summary)) {
+                const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                statsHtml += `
+                    <div class="col-md-3">
+                        <div class="stats-card">
+                            <div class="stats-number">${value}</div>
+                            <div class="stats-label">${label}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            statsHtml += '</div>';
+        }
+        
+        // Build table
+        const headers = Object.keys(reportData[0]);
+        let tableHtml = `
+            ${statsHtml}
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Total Records: ${reportData.length}</h6>
+                <div>
+                    <button class="btn btn-outline-primary btn-sm download-btn" onclick="downloadReport('csv')">
+                        <i class="bi bi-download me-1"></i> Download CSV
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="downloadReport('pdf')">
+                        <i class="bi bi-file-pdf me-1"></i> Download PDF
+                    </button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark sticky-top">
+                        <tr>
+                            ${headers.map(h => `<th>${formatHeader(h)}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${reportData.map(row => `
+                            <tr>
+                                ${headers.map(h => `<td>${row[h] || '-'}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        container.innerHTML = tableHtml;
+    }
+
+    function formatHeader(header) {
+        return header.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    function downloadReport(format) {
+        let url = `/api/reports/${currentReportType}?download=true&format=${format}`;
+        
+        // Add current filters
+        const typeEl = document.getElementById('filterType');
+        const startDateEl = document.getElementById('filterStartDate');
+        const endDateEl = document.getElementById('filterEndDate');
+        const employeeEl = document.getElementById('filterEmployee');
+        const statusEl = document.getElementById('filterStatus');
+        const departmentEl = document.getElementById('filterDepartment');
+        const monthEl = document.getElementById('filterMonth');
+        const sourceEl = document.getElementById('filterSource');
+        
+        const params = new URLSearchParams();
+        if (typeEl && typeEl.value) params.append('type', typeEl.value);
+        if (startDateEl && startDateEl.value) params.append('start_date', startDateEl.value);
+        if (endDateEl && endDateEl.value) params.append('end_date', endDateEl.value);
+        if (employeeEl && employeeEl.value) params.append('employee_id', employeeEl.value);
+        if (statusEl && statusEl.value) params.append('status', statusEl.value);
+        if (departmentEl && departmentEl.value) params.append('department', departmentEl.value);
+        if (monthEl && monthEl.value) params.append('month', monthEl.value);
+        if (sourceEl && sourceEl.value) params.append('source', sourceEl.value);
+        
+        url += '&' + params.toString();
+        
+        window.open(url, '_blank');
+    }
+</script>
+{% endblock %}

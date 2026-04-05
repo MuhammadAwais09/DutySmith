@@ -1,73 +1,125 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 
-import 'firebase_options.dart';
-import 'splash_screen.dart';
-import 'login_screen.dart';
-import 'register_screen.dart';
-import 'menu_screen.dart'; // 👈 replaces the old home_screen import
+import 'firebase_options.dart'; // ✅ Required for Firebase
+import 'providers/app_provider.dart';
+import 'screens/splash_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
+import 'utils/constants.dart';
+import 'utils/app_colors.dart';
 
-class LanguageProvider with ChangeNotifier {
-  bool _isUrdu = false;
-
-  bool get isUrdu => _isUrdu;
-
-  void setLanguage(bool isUrdu) {
-    _isUrdu = isUrdu;
-    notifyListeners();
-  }
-
-  Locale get locale =>
-      _isUrdu ? const Locale('ur', 'PK') : const Locale('en', 'US');
-}
-
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Lock app orientation
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  // ✅ Initialize Firebase correctly (Fix for web + android)
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => LanguageProvider(),
-      child: const MainApp(),
-    ),
-  );
+  runApp(const DutySmithApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class DutySmithApp extends StatelessWidget {
+  const DutySmithApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<LanguageProvider>(
-      builder: (context, languageProvider, child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          locale: languageProvider.locale,
-          supportedLocales: const [
-            Locale('en', 'US'),
-            Locale('ur', 'PK'),
-          ],
-          theme: ThemeData(
-            primaryColor: const Color(0xFF003366),
-            scaffoldBackgroundColor: const Color(0xFFFFFFFF),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AppProvider()),
+      ],
+      child: MaterialApp(
+        title: AppStrings.appName,
+        debugShowCheckedModeBanner: false,
+
+        theme: ThemeData(
+          useMaterial3: true,
+
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.primaryBlue,
+            brightness: Brightness.light,
           ),
 
-          // Start at splash
-          initialRoute: '/',
+          scaffoldBackgroundColor: AppColors.background,
 
-          // Define named routes used by SplashScreen
-          routes: {
-            '/': (_) => const SplashScreen(),
-            '/login': (_) => const LoginScreen(),
-            '/register': (_) => const RegisterScreen(),
-            '/home': (_) => const MenuScreen(), // 👈 renamed to MenuScreen
-          },
-        );
-      },
+          appBarTheme: AppBarTheme(
+            backgroundColor: AppColors.primaryDarkBlue,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+          ),
+
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 32,
+                vertical: 16,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: Colors.white,
+
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Colors.grey.shade300,
+              ),
+            ),
+
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: Colors.grey.shade300,
+              ),
+            ),
+
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.primaryBlue,
+                width: 2,
+              ),
+            ),
+
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+          ),
+
+          cardTheme: CardThemeData(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+
+        home: const SplashScreen(),
+
+        routes: {
+          '/login': (context) => const LoginScreen(),
+          '/home': (context) => const HomeScreen(),
+        },
+      ),
     );
   }
 }

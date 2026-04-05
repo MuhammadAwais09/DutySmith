@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}Duty Schedule - Duty Smith Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Duty Schedule</h2>
+            <p class="text-muted mb-0">Manage employee duties and assignments</p>
+        </div>
+        <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addDutyModal">
+            <i class="bi bi-plus-lg me-2"></i>Assign Duty
+        </button>
+    </div>
+
+    <!-- Duties Table -->
+    <div class="custom-table">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-header">
+                    <tr>
+                        <th class="py-3 px-4">Employee</th>
+                        <th class="py-3">Duty Title</th>
+                        <th class="py-3">Date</th>
+                        <th class="py-3">Time</th>
+                        <th class="py-3">Location</th>
+                        <th class="py-3">Status</th>
+                        <th class="py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for duty in duties %}
+                    <tr class="align-middle">
+                        <td class="py-3 px-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="bi bi-person text-info"></i>
+                                </div>
+                                <span class="fw-medium">{{ duty.employeeName }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="fw-bold">{{ duty.title }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">
+                                <i class="bi bi-calendar me-1"></i>{{ duty.date }}
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ duty.startTime }} - {{ duty.endTime }}
+                            </small>
+                        </td>
+                        <td>
+                            <i class="bi bi-geo-alt text-muted me-1"></i>{{ duty.location }}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if duty.status == 'completed' else 'warning' if duty.status == 'scheduled' else 'danger' }}">
+                                {{ duty.status.title() }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary me-1 edit-duty-btn" 
+                                data-id="{{ duty.id }}"
+                                data-employee="{{ duty.employeeId }}"
+                                data-employeename="{{ duty.employeeName }}"
+                                data-title="{{ duty.title }}"
+                                data-date="{{ duty.date }}"
+                                data-starttime="{{ duty.startTime }}"
+                                data-endtime="{{ duty.endTime }}"
+                                data-location="{{ duty.location|default('') }}"
+                                data-status="{{ duty.status|default('scheduled') }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-duty-btn"
+                                data-id="{{ duty.id }}"
+                                data-title="{{ duty.title }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-calendar-x fs-1 text-muted mb-3 d-block"></i>
+                            <p class="text-muted">No duties scheduled</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Duty Modal -->
+<div class="modal fade" id="addDutyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar-plus me-2"></i>Assign New Duty
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addDutyForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Employee</label>
+                        <select class="form-select form-select-lg" name="employeeId" required>
+                            <option value="">Choose employee...</option>
+                            {% for uid, name in employees.items() %}
+                            <option value="{{ uid }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Duty Title</label>
+                        <input type="text" class="form-control form-select-lg" name="title" required 
+                               placeholder="e.g., Library Duty, Lab Supervision">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Date</label>
+                            <input type="date" class="form-control form-select-lg" name="date" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Start Time</label>
+                            <input type="time" class="form-control form-select-lg" name="startTime" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">End Time</label>
+                            <input type="time" class="form-control form-select-lg" name="endTime" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Location</label>
+                        <input type="text" class="form-control form-select-lg" name="location" 
+                               placeholder="e.g., Main Library, Room 101" value="Main Branch">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary-custom" onclick="submitDuty()">
+                    <i class="bi bi-check-lg me-2"></i>Assign Duty
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Duty Modal -->
+<div class="modal fade" id="editDutyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil-square me-2"></i>Edit Duty
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="editDutyForm">
+                    <input type="hidden" name="dutyId" id="editDutyId">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Employee</label>
+                        <select class="form-select form-select-lg" name="employeeId" id="editDutyEmployee" required>
+                            <option value="">Choose employee...</option>
+                            {% for uid, name in employees.items() %}
+                            <option value="{{ uid }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Duty Title</label>
+                        <input type="text" class="form-control form-select-lg" name="title" id="editDutyTitle" required 
+                               placeholder="e.g., Library Duty, Lab Supervision">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Date</label>
+                            <input type="date" class="form-control form-select-lg" name="date" id="editDutyDate" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Start Time</label>
+                            <input type="time" class="form-control form-select-lg" name="startTime" id="editDutyStartTime" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">End Time</label>
+                            <input type="time" class="form-control form-select-lg" name="endTime" id="editDutyEndTime" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Location</label>
+                        <input type="text" class="form-control form-select-lg" name="location" id="editDutyLocation"
+                               placeholder="e.g., Main Library, Room 101">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Status</label>
+                        <select class="form-select form-select-lg" name="status" id="editDutyStatus" required>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="updateDuty()">
+                    <i class="bi bi-check-lg me-2"></i>Update Duty
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default date to today for add form
+    const dateInput = document.querySelector('#addDutyForm input[name="date"]');
+    if (dateInput) {
+        dateInput.valueAsDate = new Date();
+    }
+
+    // Edit duty buttons
+    document.querySelectorAll('.edit-duty-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            editDuty(
+                this.dataset.id,
+                this.dataset.employee,
+                this.dataset.employeename,
+                this.dataset.title,
+                this.dataset.date,
+                this.dataset.starttime,
+                this.dataset.endtime,
+                this.dataset.location,
+                this.dataset.status
+            );
+        });
+    });
+
+    // Delete duty buttons
+    document.querySelectorAll('.delete-duty-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            deleteDuty(this.dataset.id, this.dataset.title);
+        });
+    });
+});
+
+// Add Duty
+async function submitDuty() {
+    const form = document.getElementById('addDutyForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    
+    const btn = document.querySelector('#addDutyModal .btn-primary-custom');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Assigning...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch('/api/duties', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('addDutyModal')).hide();
+            form.reset();
+            document.querySelector('#addDutyForm input[name="date"]').valueAsDate = new Date();
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to assign duty'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Edit Duty - Open Modal with Data
+function editDuty(id, employeeId, employeeName, title, date, startTime, endTime, location, status) {
+    document.getElementById('editDutyId').value = id || '';
+    document.getElementById('editDutyEmployee').value = employeeId || '';
+    document.getElementById('editDutyTitle').value = title || '';
+    document.getElementById('editDutyDate').value = date || '';
+    document.getElementById('editDutyStartTime').value = startTime || '';
+    document.getElementById('editDutyEndTime').value = endTime || '';
+    document.getElementById('editDutyLocation').value = location || '';
+    document.getElementById('editDutyStatus').value = status || 'scheduled';
+    
+    const modal = new bootstrap.Modal(document.getElementById('editDutyModal'));
+    modal.show();
+}
+
+// Update Duty
+async function updateDuty() {
+    const form = document.getElementById('editDutyForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    const dutyId = data.dutyId;
+    
+    delete data.dutyId;
+    
+    const btn = document.querySelector('#editDutyModal .btn-warning');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch(`/api/duties/${dutyId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editDutyModal')).hide();
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to update duty'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Delete Duty
+async function deleteDuty(dutyId, title) {
+    if (!confirm(`Are you sure you want to delete duty "${title || 'this duty'}"?`)) return;
+    
+    try {
+        const response = await fetch(`/api/duties/${dutyId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance - Duty Smith Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Attendance Records</h2>
+            <p class="text-muted mb-0">Track employee check-ins and check-outs</p>
+        </div>
+        <div class="d-flex gap-2">
+            <input type="date" class="form-control" id="dateFilter" value="{{ selected_date }}" 
+                   onchange="changeDate(this.value)">
+            <button class="btn btn-outline-primary" onclick="exportAttendance()">
+                <i class="bi bi-download me-2"></i>Export
+            </button>
+            <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addAttendanceModal">
+                <i class="bi bi-plus-lg me-2"></i>Mark Attendance
+            </button>
+        </div>
+    </div>
+
+    <!-- Attendance Table -->
+    <div class="custom-table">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-header">
+                    <tr>
+                        <th class="py-3 px-4">Employee</th>
+                        <th class="py-3">Date</th>
+                        <th class="py-3">Check In</th>
+                        <th class="py-3">Check Out</th>
+                        <th class="py-3">Location</th>
+                        <th class="py-3">Status</th>
+                        <th class="py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in attendance %}
+                    <tr class="align-middle">
+                        <td class="py-3 px-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-{{ 'success' if record.status == 'present' else 'warning' if record.status == 'late' else 'danger' }} 
+                                            bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="bi bi-person text-{{ 'success' if record.status == 'present' else 'warning' if record.status == 'late' else 'danger' }}"></i>
+                                </div>
+                                <span class="fw-medium">{{ record.employeeName }}</span>
+                            </div>
+                        </td>
+                        <td>{{ record.date }}</td>
+                        <td>
+                            {% if record.checkIn != '-' %}
+                            <span class="badge bg-light text-dark">
+                                <i class="bi bi-box-arrow-in-right me-1 text-success"></i>{{ record.checkIn }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if record.checkOut != '-' %}
+                            <span class="badge bg-light text-dark">
+                                <i class="bi bi-box-arrow-right me-1 text-danger"></i>{{ record.checkOut }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <i class="bi bi-geo-alt text-muted me-1"></i>{{ record.location }}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if record.status == 'present' else 'warning' if record.status == 'late' else 'danger' if record.status == 'absent' else 'secondary' }}">
+                                {{ record.status.title() }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary me-1 edit-attendance-btn"
+                                data-uid="{{ record.uid }}"
+                                data-name="{{ record.employeeName }}"
+                                data-date="{{ record.date }}"
+                                data-checkin="{{ record.checkIn }}"
+                                data-checkout="{{ record.checkOut }}"
+                                data-location="{{ record.location }}"
+                                data-status="{{ record.status }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-attendance-btn"
+                                data-uid="{{ record.uid }}"
+                                data-date="{{ record.date }}"
+                                data-name="{{ record.employeeName }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-clipboard-x fs-1 text-muted mb-3 d-block"></i>
+                            <p class="text-muted">No attendance records for {{ selected_date }}</p>
+                            <button class="btn btn-primary-custom mt-2" data-bs-toggle="modal" data-bs-target="#addAttendanceModal">
+                                Mark First Attendance
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card bg-success bg-opacity-10 border-0">
+                <div class="card-body text-center">
+                    <h3 class="text-success mb-1">{{ summary.present }}</h3>
+                    <small class="text-muted">Present</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning bg-opacity-10 border-0">
+                <div class="card-body text-center">
+                    <h3 class="text-warning mb-1">{{ summary.late }}</h3>
+                    <small class="text-muted">Late</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger bg-opacity-10 border-0">
+                <div class="card-body text-center">
+                    <h3 class="text-danger mb-1">{{ summary.absent }}</h3>
+                    <small class="text-muted">Absent</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info bg-opacity-10 border-0">
+                <div class="card-body text-center">
+                    <h3 class="text-info mb-1">{{ summary.total }}</h3>
+                    <small class="text-muted">Total Records</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Attendance Modal -->
+<div class="modal fade" id="addAttendanceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar-check me-2"></i>Mark Attendance
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addAttendanceForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Employee</label>
+                        <select class="form-select form-select-lg" name="employeeId" required>
+                            <option value="">Choose employee...</option>
+                            {% for emp in all_employees %}
+                            <option value="{{ emp.uid }}">{{ emp.name }} ({{ emp.type }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Date</label>
+                        <input type="date" class="form-control form-select-lg" name="date" required 
+                               value="{{ selected_date }}">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Check In Time</label>
+                            <input type="time" class="form-control form-select-lg" name="checkIn" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Check Out Time</label>
+                            <input type="time" class="form-control form-select-lg" name="checkOut">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Status</label>
+                        <select class="form-select form-select-lg" name="status" required>
+                            <option value="present">Present</option>
+                            <option value="late">Late</option>
+                            <option value="absent">Absent</option>
+                            <option value="half_day">Half Day</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Location</label>
+                        <input type="text" class="form-control form-select-lg" name="location" 
+                               placeholder="e.g., Main Office, Branch A" value="Main Office">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary-custom" onclick="submitAttendance()">
+                    <i class="bi bi-check-lg me-2"></i>Mark Attendance
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Attendance Modal -->
+<div class="modal fade" id="editAttendanceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil-square me-2"></i>Edit Attendance
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="editAttendanceForm">
+                    <input type="hidden" name="employeeId" id="editAttendanceUid">
+                    <input type="hidden" name="date" id="editAttendanceDate">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Employee</label>
+                        <input type="text" class="form-control form-select-lg" id="editAttendanceName" readonly>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Check In Time</label>
+                            <input type="time" class="form-control form-select-lg" name="checkIn" id="editAttendanceCheckIn">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Check Out Time</label>
+                            <input type="time" class="form-control form-select-lg" name="checkOut" id="editAttendanceCheckOut">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Status</label>
+                        <select class="form-select form-select-lg" name="status" id="editAttendanceStatus" required>
+                            <option value="present">Present</option>
+                            <option value="late">Late</option>
+                            <option value="absent">Absent</option>
+                            <option value="half_day">Half Day</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Location</label>
+                        <input type="text" class="form-control form-select-lg" name="location" id="editAttendanceLocation">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="updateAttendance()">
+                    <i class="bi bi-check-lg me-2"></i>Update Attendance
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Edit attendance buttons
+    document.querySelectorAll('.edit-attendance-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            editAttendance(
+                this.dataset.uid,
+                this.dataset.name,
+                this.dataset.date,
+                this.dataset.checkin,
+                this.dataset.checkout,
+                this.dataset.location,
+                this.dataset.status
+            );
+        });
+    });
+
+    // Delete attendance buttons
+    document.querySelectorAll('.delete-attendance-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            deleteAttendance(this.dataset.uid, this.dataset.date, this.dataset.name);
+        });
+    });
+});
+
+function changeDate(date) {
+    window.location.href = `?date=${date}`;
+}
+
+function exportAttendance() {
+    const date = document.getElementById('dateFilter').value;
+    window.location.href = `/api/attendance/export?date=${date}`;
+}
+
+// Add Attendance
+async function submitAttendance() {
+    const form = document.getElementById('addAttendanceForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    
+    const btn = document.querySelector('#addAttendanceModal .btn-primary-custom');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch('/api/attendance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('addAttendanceModal')).hide();
+            form.reset();
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to mark attendance'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Edit Attendance - Open Modal with Data
+function editAttendance(uid, name, date, checkIn, checkOut, location, status) {
+    document.getElementById('editAttendanceUid').value = uid;
+    document.getElementById('editAttendanceDate').value = date;
+    document.getElementById('editAttendanceName').value = name || '';
+    document.getElementById('editAttendanceCheckIn').value = checkIn === '-' ? '' : checkIn;
+    document.getElementById('editAttendanceCheckOut').value = checkOut === '-' ? '' : checkOut;
+    document.getElementById('editAttendanceLocation').value = location || 'Main Office';
+    document.getElementById('editAttendanceStatus').value = status || 'present';
+    
+    const modal = new bootstrap.Modal(document.getElementById('editAttendanceModal'));
+    modal.show();
+}
+
+// Update Attendance
+async function updateAttendance() {
+    const form = document.getElementById('editAttendanceForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    
+    const btn = document.querySelector('#editAttendanceModal .btn-warning');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch('/api/attendance', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editAttendanceModal')).hide();
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to update attendance'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Delete Attendance
+async function deleteAttendance(uid, date, name) {
+    if (!confirm(`Are you sure you want to delete attendance record for ${name || 'this employee'} on ${date}?`)) return;
+    
+    try {
+        const response = await fetch(`/api/attendance/${uid}/${date}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

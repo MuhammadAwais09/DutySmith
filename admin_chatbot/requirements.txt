@@ -1,0 +1,17 @@
+﻿# Flask
+Flask>=3.0.0
+Werkzeug>=3.0.1
+
+# Environment
+python-dotenv>=1.0.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# Machine Learning / Chatbot
+tensorflow>=2.20.0
+nltk>=3.8.1
+numpy>=1.26.0
+
+# Production Server (optional)
+gunicorn>=21.2.0
